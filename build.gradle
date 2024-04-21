@@ -1,5 +1,5 @@
 apply plugin: 'java'
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 apply plugin: 'application'
 
 version='1.0.1-SNAPSHOT'
@@ -14,14 +14,14 @@ repositories {
     jcenter()
     
     // Temporary until JME jars are in jcenter()   
-    maven { url "http://dl.bintray.com/jmonkeyengine/org.jmonkeyengine" }
+    //maven { url "http://dl.bintray.com/jmonkeyengine/org.jmonkeyengine" }
     
     // Meta-jb stuff        
-    maven { url "http://svn.code.sf.net/p/meta-jb/svn/trunk/dev/m2-repo/" }        
+    maven { url "https://svn.code.sf.net/p/meta-jb/svn/trunk/dev/m2-repo/" }        
 }
 
 // Make sure the build file declares what it actually imports
-configurations.compile {
+configurations.implementation {
     transitive = false
 }
 
@@ -34,45 +34,47 @@ sourceSets.main.resources {
 // In this section you declare the dependencies for your production and test code
 dependencies {
 
-    compile "org.jmonkeyengine:jme3-core:3.1.+"
-    compile "org.jmonkeyengine:jme3-desktop:3.1.+" 
-    compile "org.jmonkeyengine:jme3-effects:3.1.+" 
-    compile "org.jmonkeyengine:jme3-lwjgl:3.1.+" 
+    implementation "org.jmonkeyengine:jme3-core:3.1.+"
+    implementation "org.jmonkeyengine:jme3-desktop:3.1.+" 
+    implementation "org.jmonkeyengine:jme3-effects:3.1.+" 
+    implementation "org.jmonkeyengine:jme3-lwjgl:3.1.+" 
      
-    compile "com.simsilica:sim-arboreal:1.0.1-SNAPSHOT"
-    runtime 'com.simsilica:sim-arboreal:1.0.1-SNAPSHOT:assets'
+    implementation "com.simsilica:sim-arboreal:1.0.1-SNAPSHOT"
+    runtimeOnly 'com.simsilica:sim-arboreal:1.0.1-SNAPSHOT:assets'
 
-    compile "com.simsilica:lemur:1.6.+"
-    compile "com.simsilica:lemur-proto:1.5.+"
-    compile "com.simsilica:lemur-props:1.0.+"
-    runtime 'org.codehaus.groovy:groovy-all:2.4.5'
+    implementation "com.simsilica:lemur:1.6.+"
+    implementation "com.simsilica:lemur-proto:1.5.+"
+    implementation "com.simsilica:lemur-props:1.0.+"
+    runtimeOnly 'org.codehaus.groovy:groovy-all:2.4.5'
 
-    compile "com.simsilica:pager:1.0.+"
-    compile "com.simsilica:sim-fx:1.0.+"
-    runtime "com.simsilica:sim-fx:1.0.+:assets"
+    implementation "com.simsilica:pager:1.0.+"
+    implementation "com.simsilica:sim-fx:1.0.+"
+    // It does not seem that SimFX has or should have an assets jar?
+    // runtimeOnly "com.simsilica:sim-fx:1.0.+:assets"
 
-    compile 'org.meta-jb:meta-jb-json:1.0.1'
+    implementation 'org.meta-jb:meta-jb-json:1.0.1'
 
-    compile 'org.slf4j:slf4j-api:1.7.13'
+    implementation 'org.slf4j:slf4j-api:1.7.13'
         
-    runtime files("assets")        
+    runtimeOnly files("assets")        
 }
 
 
 // Configuration to produce maven-repo style -sources and -javadoc jars
 task sourcesJar(type: Jar) {
-    classifier = 'sources'
+    duplicatesStrategy = 'WARN'
+    archiveClassifier = 'sources'
     from sourceSets.main.allSource
     exclude '**/.backups' 
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.destinationDir
 }
  
 task assetsJar(type: Jar) {
-    classifier = 'assets'
+    archiveClassifier = 'assets'
     from file('assets')
     exclude '**/*.psd' 
     exclude '**/.backups' 
@@ -84,4 +86,23 @@ artifacts {
     archives assetsJar
 }
 
+task uberjar(type: Jar) {
+    from(configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }) {
+        exclude "META-INF/*.SF"
+        exclude "META-INF/*.DSA"
+        exclude "META-INF/*.RSA"
+    }
+    
+    archiveBaseName = 'sim-arboreal-editor-UBERJAR'
+    duplicatesStrategy = DuplicatesStrategy.WARN
+
+    manifest {
+        attributes 'Implementation-Title': 'SimArboreal-Editor',
+                'Implementation-Version': version,
+                'Built-By': System.getProperty('user.name'),
+                'Built-Date': new Date(),
+                'Built-JDK': System.getProperty('java.version'),
+                'Main-Class': mainClassName
+    }
+}
 
