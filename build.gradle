@@ -7,7 +7,14 @@ group='com.simsilica'
 
 mainClassName = 'com.simsilica.arboreal.TreeEditor'
 
-applicationDefaultJvmArgs = ["-Xmx512m", "-XX:MaxDirectMemorySize=512m"]
+application {
+    applicationDefaultJvmArgs = [ "-ea", "-Xmx3g", "-Xms512m", 
+    "-XX:MaxDirectMemorySize=3g", 
+    "--add-opens", "java.base/java.io=ALL-UNNAMED", 
+    "--add-opens", "java.base/java.lang=ALL-UNNAMED", 
+    "--add-opens", "java.base/java.math=ALL-UNNAMED", 
+    "--add-opens", "java.base/java.util=ALL-UNNAMED" ]
+}
 
 repositories {
     mavenLocal()
